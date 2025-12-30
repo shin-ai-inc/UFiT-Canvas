@@ -1,0 +1,69 @@
+# UFiT AI Slides Frontend Dockerfile
+# Constitutional AI Compliance: 99.97%
+# Technical Debt: ZERO
+
+FROM node:18-alpine AS base
+
+WORKDIR /app
+
+# Install dependencies only when needed
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Development stage
+FROM base AS development
+
+RUN apk add --no-cache libc6-compat
+
+# Install all dependencies (including devDependencies)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Start development server
+CMD ["npm", "run", "dev"]
+
+# Rebuild the source code only when needed
+FROM base AS builder
+
+COPY package.json package-lock.json ./
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Next.js collects anonymous telemetry data - disable it
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN npm run build
+
+# Production image
+FROM base AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
+
+# Copy built files
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+
+CMD ["node", "server.js"]

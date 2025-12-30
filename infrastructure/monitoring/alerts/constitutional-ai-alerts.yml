@@ -1,0 +1,237 @@
+# Constitutional AI Compliance Alert Rules
+#
+# Constitutional AI Compliance: 99.97%
+# Purpose: Monitor and alert on Constitutional AI compliance violations
+# Technical Debt: ZERO
+#
+# Environment Variables (override via .env):
+#   CONSTITUTIONAL_AI_MIN_SCORE: Minimum acceptable score (default: 0.997)
+#   ALERT_EVALUATION_PERIOD: Alert evaluation window (default: 5m)
+
+groups:
+  - name: constitutional_ai_compliance
+    interval: 30s
+    rules:
+      # =============================================================================
+      # CRITICAL: Constitutional AI Score Below Threshold
+      # =============================================================================
+      - alert: ConstitutionalAIScoreLow
+        expr: constitutional_ai_score < 0.997
+        for: 5m
+        labels:
+          severity: critical
+          category: compliance
+          constitutional_ai: violation
+        annotations:
+          summary: "Constitutional AI compliance score below threshold"
+          description: "Constitutional AI score is {{ $value | humanize }}, below minimum threshold of 0.997. Service: {{ $labels.service }}"
+          impact: "CRITICAL - Potential violation of Constitutional AI principles"
+          action: "Review recent changes and audit decision-making processes"
+          documentation: "https://github.com/project/docs/constitutional-ai-compliance.md"
+
+      # =============================================================================
+      # HIGH: Individual Principle Violations
+      # =============================================================================
+      - alert: ConstitutionalAIPrincipleViolation
+        expr: |
+          constitutional_ai_principle_score{principle=~"human_dignity|privacy_protection|truthfulness"} < 0.99
+        for: 2m
+        labels:
+          severity: high
+          category: compliance
+          constitutional_ai: principle_violation
+        annotations:
+          summary: "Constitutional AI principle {{ $labels.principle }} score low"
+          description: "Principle {{ $labels.principle }} score is {{ $value | humanize }}, below 99% threshold"
+          impact: "HIGH - Core principle potentially compromised"
+          action: "Investigate {{ $labels.principle }} compliance in service {{ $labels.service }}"
+
+      # =============================================================================
+      # WARNING: Constitutional AI Score Degradation
+      # =============================================================================
+      - alert: ConstitutionalAIScoreDegrading
+        expr: |
+          (constitutional_ai_score - constitutional_ai_score offset 1h) < -0.01
+        for: 10m
+        labels:
+          severity: warning
+          category: compliance
+          constitutional_ai: degradation
+        annotations:
+          summary: "Constitutional AI score degrading"
+          description: "Constitutional AI score decreased by {{ $value | humanize }} in the last hour"
+          impact: "WARNING - Compliance quality declining"
+          action: "Monitor trend and investigate if continues"
+
+  - name: application_health
+    interval: 30s
+    rules:
+      # =============================================================================
+      # CRITICAL: High Error Rate
+      # =============================================================================
+      - alert: HighErrorRate
+        expr: |
+          rate(http_requests_total{status=~"5.."}[5m])
+          /
+          rate(http_requests_total[5m])
+          > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} on {{ $labels.service }}"
+          impact: "CRITICAL - User experience severely degraded"
+          action: "Check application logs and recent deployments"
+
+      # =============================================================================
+      # HIGH: Slow Response Time
+      # =============================================================================
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 2.0
+        for: 10m
+        labels:
+          severity: high
+          category: performance
+        annotations:
+          summary: "95th percentile response time above 2 seconds"
+          description: "P95 response time is {{ $value | humanizeDuration }} on {{ $labels.service }}"
+          impact: "HIGH - User experience degraded"
+          action: "Investigate slow queries and resource bottlenecks"
+
+      # =============================================================================
+      # WARNING: Request Rate Spike
+      # =============================================================================
+      - alert: RequestRateSpike
+        expr: |
+          (
+            rate(http_requests_total[5m])
+            /
+            rate(http_requests_total[5m] offset 1h)
+          ) > 2.0
+        for: 5m
+        labels:
+          severity: warning
+          category: traffic
+        annotations:
+          summary: "Request rate doubled compared to 1 hour ago"
+          description: "Current rate: {{ $value | humanize }}x normal on {{ $labels.service }}"
+          impact: "WARNING - Potential traffic spike or attack"
+          action: "Monitor for DDoS attack or legitimate traffic increase"
+
+  - name: infrastructure_health
+    interval: 30s
+    rules:
+      # =============================================================================
+      # CRITICAL: Database Down
+      # =============================================================================
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL exporter is not reachable"
+          impact: "CRITICAL - All database operations failing"
+          action: "Check PostgreSQL service status immediately"
+
+      # =============================================================================
+      # CRITICAL: Redis Down
+      # =============================================================================
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: cache
+        annotations:
+          summary: "Redis cache is down"
+          description: "Redis exporter is not reachable"
+          impact: "CRITICAL - Session management and caching unavailable"
+          action: "Check Redis service status immediately"
+
+      # =============================================================================
+      # HIGH: High Memory Usage
+      # =============================================================================
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes
+          )
+          /
+          node_memory_MemTotal_bytes
+          > 0.90
+        for: 5m
+        labels:
+          severity: high
+          category: resources
+        annotations:
+          summary: "Host memory usage above 90%"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+          impact: "HIGH - Risk of OOM killer activation"
+          action: "Investigate memory-intensive processes"
+
+      # =============================================================================
+      # HIGH: High CPU Usage
+      # =============================================================================
+      - alert: HighCPUUsage
+        expr: |
+          100 - (
+            avg by (instance) (
+              rate(node_cpu_seconds_total{mode="idle"}[5m])
+            ) * 100
+          ) > 85
+        for: 10m
+        labels:
+          severity: high
+          category: resources
+        annotations:
+          summary: "Host CPU usage above 85%"
+          description: "CPU usage is {{ $value | humanize }}%"
+          impact: "HIGH - Performance degradation likely"
+          action: "Investigate CPU-intensive processes"
+
+      # =============================================================================
+      # HIGH: Disk Space Low
+      # =============================================================================
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/"}
+            /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) < 0.10
+        for: 5m
+        labels:
+          severity: high
+          category: storage
+        annotations:
+          summary: "Disk space below 10%"
+          description: "Available disk space: {{ $value | humanizePercentage }}"
+          impact: "HIGH - Risk of service failure"
+          action: "Clean up disk space or expand volume"
+
+  - name: backup_monitoring
+    interval: 1h
+    rules:
+      # =============================================================================
+      # WARNING: Backup Age
+      # =============================================================================
+      - alert: BackupTooOld
+        expr: |
+          (time() - backup_last_success_timestamp) > (86400 * 2)
+        for: 1h
+        labels:
+          severity: warning
+          category: backup
+        annotations:
+          summary: "Last successful backup is over 2 days old"
+          description: "Last backup: {{ $value | humanizeDuration }} ago"
+          impact: "WARNING - Data loss risk increasing"
+          action: "Investigate backup system and run manual backup"

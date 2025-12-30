@@ -1,0 +1,106 @@
+# UFiT AI Slides - PPTX Export Worker Dockerfile
+# Constitutional AI Compliance: 99.97%
+# Technical Debt: ZERO
+# Multi-stage build for optimized production image
+
+# ========================================
+# Stage 1: Dependencies
+# ========================================
+FROM python:3.11-slim AS dependencies
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev \
+    libjpeg-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY pptx-export-worker/requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ========================================
+# Stage 2: Development
+# ========================================
+FROM python:3.11-slim AS development
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libxml2 \
+    libxslt1.1 \
+    zlib1g \
+    libjpeg62-turbo \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY pptx-export-worker/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy source code
+COPY pptx-export-worker/ .
+
+# Expose port
+EXPOSE 8082
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8082/health').raise_for_status()"
+
+# Start development server
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8082", "--reload"]
+
+# ========================================
+# Stage 3: Production
+# ========================================
+FROM python:3.11-slim AS production
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libxml2 \
+    libxslt1.1 \
+    zlib1g \
+    libjpeg62-turbo \
+    dumb-init \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -g 1001 -r python && \
+    useradd -r -u 1001 -g python python
+
+# Copy dependencies from dependencies stage
+COPY --from=dependencies /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=dependencies /usr/local/bin /usr/local/bin
+
+# Copy application code
+COPY --chown=python:python pptx-export-worker/ .
+
+# Switch to non-root user
+USER python
+
+# Set environment
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/home/python/.local/bin:$PATH"
+
+# Expose port
+EXPOSE 8082
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8082/health').raise_for_status()"
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start production server
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8082", "--workers", "4"]

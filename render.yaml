@@ -4,6 +4,9 @@
 #
 # このファイルは、Render上のすべてのサービスを定義します
 # GitHub リポジトリに配置することで、自動的にサービスが作成されます
+#
+# Last updated: 2025-12-31 06:32 JST
+# Deployment trigger: Force Render cache refresh
 
 services:
   # ===========================================================================

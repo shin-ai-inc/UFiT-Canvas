@@ -90,11 +90,7 @@ export class TemplateAdaptationService {
 
     try {
       // Fetch all available templates
-      const templates = await Template.findAll({
-        where: {
-          isActive: true
-        }
-      });
+      const templates = await Template.findAll();
 
       if (templates.length === 0) {
         return {

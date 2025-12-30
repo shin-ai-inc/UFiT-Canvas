@@ -153,7 +153,7 @@ export class PuppeteerRenderingService {
       });
 
       // Wait for any dynamic content
-      await page.waitForTimeout(1000);
+      await page.waitForSelector('body', { timeout: 1000 });
 
       // Capture screenshot
       const format = options.format || 'png';
@@ -167,7 +167,9 @@ export class PuppeteerRenderingService {
       });
 
       // Convert to base64
-      const screenshotBase64 = screenshotBuffer.toString('base64');
+      const screenshotBase64 = Buffer.isBuffer(screenshotBuffer)
+        ? screenshotBuffer.toString('base64')
+        : Buffer.from(screenshotBuffer).toString('base64');
 
       // Calculate render time
       const renderTime = Date.now() - startTime;
@@ -307,7 +309,7 @@ export class PuppeteerRenderingService {
         timeout: PUPPETEER_TIMEOUT
       });
 
-      await page.waitForTimeout(1000);
+      await page.waitForSelector('body', { timeout: 1000 });
 
       // Find element
       const element = await page.$(selector);
@@ -328,7 +330,9 @@ export class PuppeteerRenderingService {
         omitBackground: false
       });
 
-      const screenshotBase64 = screenshotBuffer.toString('base64');
+      const screenshotBase64 = Buffer.isBuffer(screenshotBuffer)
+        ? screenshotBuffer.toString('base64')
+        : Buffer.from(screenshotBuffer).toString('base64');
       const renderTime = Date.now() - startTime;
 
       // Get element bounding box for dimensions

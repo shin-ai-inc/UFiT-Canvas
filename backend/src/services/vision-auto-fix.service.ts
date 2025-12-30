@@ -151,10 +151,15 @@ Constitutional AI準拠:
 具体的で実行可能な改善提案を含めてください。`;
 
     try {
-      const analysisResult = await this.claudeService.analyzeSlideQuality(screenshotBase64);
+      const analysisResult: any = await this.claudeService.analyzeSlideQuality(screenshotBase64);
 
       return {
-        ...analysisResult,
+        qualityScore: analysisResult.qualityScore || 0,
+        issues: (analysisResult.issues || []) as QualityIssue[],
+        strengths: analysisResult.strengths || [],
+        goldenRatioCompliance: analysisResult.goldenRatioCompliance || 0,
+        accessibilityScore: analysisResult.accessibilityScore || 0,
+        aestheticScore: analysisResult.aestheticScore || 0,
         timestamp: new Date()
       };
     } catch (error: any) {

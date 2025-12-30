@@ -146,6 +146,16 @@ export class RateLimitError extends AppError {
 }
 
 /**
+ * Internal Server Error
+ */
+export class InternalServerError extends AppError {
+  constructor(message: string = 'Internal server error', details?: any) {
+    super(message, 500, true, details);
+    this.name = 'InternalServerError';
+  }
+}
+
+/**
  * Constitutional AI Violation Error
  */
 export class ConstitutionalViolationError extends AppError {

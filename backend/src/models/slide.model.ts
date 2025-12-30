@@ -86,6 +86,18 @@ export interface QualityAnalysis {
 }
 
 /**
+ * スライドメタデータ
+ */
+export interface SlideMetadata {
+  lastQualityCheck?: Date;
+  qualityHistory?: Array<{
+    score: number;
+    timestamp: Date;
+  }>;
+  [key: string]: any;
+}
+
+/**
  * Slideモデル属性
  */
 export interface SlideAttributes {
@@ -103,6 +115,7 @@ export interface SlideAttributes {
   exportUrls?: ExportUrls;
   visibility: SlideVisibility;
   researchData?: ResearchData;
+  metadata?: SlideMetadata;
   iterationsCount: number;
   maxIterations: number;
   createdAt: Date;
@@ -131,6 +144,7 @@ export class Slide extends Model<
   declare exportUrls: ExportUrls | null;
   declare visibility: SlideVisibility;
   declare researchData: ResearchData | null;
+  declare metadata: SlideMetadata | null;
   declare iterationsCount: CreationOptional<number>;
   declare maxIterations: number;
   declare createdAt: CreationOptional<Date>;
@@ -138,6 +152,7 @@ export class Slide extends Model<
 
   // Associations
   declare user?: NonAttribute<User>;
+  declare template?: NonAttribute<any>;
 
   /**
    * スライド品質スコア更新
@@ -313,6 +328,11 @@ Slide.init(
     researchData: {
       type: DataTypes.JSONB,
       allowNull: true
+    },
+    metadata: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: {}
     },
     iterationsCount: {
       type: DataTypes.INTEGER,

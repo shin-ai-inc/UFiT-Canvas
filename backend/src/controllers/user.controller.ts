@@ -59,7 +59,7 @@ export const getProfile = asyncHandler(async (req: Request, res: Response): Prom
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.READ,
+    actionType: ActionType.READ,
     resourceType: ResourceType.USER,
     resourceId: userProfile.id
   });
@@ -138,10 +138,10 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response): P
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.UPDATE,
+    actionType: ActionType.UPDATE,
     resourceType: ResourceType.USER,
     resourceId: userProfile.id,
-    metadata: { updates: Object.keys(updates) }
+    actionDetails: { updates: Object.keys(updates) }
   });
 
   res.json({
@@ -233,10 +233,10 @@ export const deleteAccount = asyncHandler(async (req: Request, res: Response): P
   // 監査ログ記録（削除前）
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.DELETE,
+    actionType: ActionType.DELETE,
     resourceType: ResourceType.USER,
     resourceId: userProfile.id,
-    metadata: { reason: 'User-initiated account deletion' }
+    actionDetails: { reason: 'User-initiated account deletion' }
   });
 
   // ユーザー削除
@@ -307,10 +307,10 @@ export const getUsers = asyncHandler(async (req: Request, res: Response): Promis
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.READ,
+    actionType: ActionType.READ,
     resourceType: ResourceType.USER,
     resourceId: null,
-    metadata: { filters: where, page: pageNum, limit: limitNum }
+    actionDetails: { filters: where, page: pageNum, limit: limitNum }
   });
 
   res.json({
@@ -369,10 +369,10 @@ export const updateUserRole = asyncHandler(async (req: Request, res: Response): 
   // 監査ログ記録
   await AuditLog.create({
     userId: admin.sub,
-    action: ActionType.UPDATE,
+    actionType: ActionType.UPDATE,
     resourceType: ResourceType.USER,
     resourceId: id,
-    metadata: { newRole: role, previousRole: targetUser.role }
+    actionDetails: { newRole: role, previousRole: targetUser.role }
   });
 
   res.json({

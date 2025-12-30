@@ -8,16 +8,12 @@
  * ハードコード値排除: すべて環境変数から動的取得
  */
 
-import {
-  S3Client,
-  PutObjectCommand,
-  GetObjectCommand,
-  DeleteObjectCommand,
-  ListObjectsV2Command,
-  HeadObjectCommand,
-  CopyObjectCommand
-} from '@aws-sdk/client-s3';
+// AWS SDK imports (optional dependency)
+// @ts-expect-error - AWS SDK is optional
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, ListObjectsV2Command, HeadObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3';
+// @ts-expect-error - AWS SDK is optional
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+// @ts-expect-error - AWS SDK is optional
 import { Upload } from '@aws-sdk/lib-storage';
 import { s3Config, bucketConfig, uploadConfig, signedUrlConfig, generateObjectKey } from '../config/s3.config';
 import { checkConstitutionalCompliance } from '../utils/constitutional-ai.util';

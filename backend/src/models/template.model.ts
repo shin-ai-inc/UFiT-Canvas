@@ -45,6 +45,19 @@ export interface TemplateVariables {
 }
 
 /**
+ * テンプレート構造定義
+ */
+export interface TemplateStructure {
+  layout?: string;
+  sections?: Array<{
+    id: string;
+    type: string;
+    order: number;
+  }>;
+  [key: string]: any;
+}
+
+/**
  * Templateモデル属性
  */
 export interface TemplateAttributes {
@@ -59,6 +72,11 @@ export interface TemplateAttributes {
   tags: string[];
   isPremium: boolean;
   variables?: TemplateVariables;
+  structure?: TemplateStructure;
+  colorScheme?: Record<string, any>;
+  typography?: Record<string, any>;
+  previewUrl?: string;
+  averageRating?: number;
   createdBy?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -83,6 +101,11 @@ export class Template extends Model<
   declare tags: string[];
   declare isPremium: boolean;
   declare variables: TemplateVariables | null;
+  declare structure: TemplateStructure | null;
+  declare colorScheme: Record<string, any> | null;
+  declare typography: Record<string, any> | null;
+  declare previewUrl: string | null;
+  declare averageRating: number | null;
   declare createdBy: ForeignKey<User['id']> | null;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
@@ -272,6 +295,39 @@ Template.init(
     variables: {
       type: DataTypes.JSONB,
       allowNull: true
+    },
+    structure: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: {}
+    },
+    colorScheme: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: {}
+    },
+    typography: {
+      type: DataTypes.JSONB,
+      allowNull: true,
+      defaultValue: {}
+    },
+    previewUrl: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+      validate: {
+        isUrl: {
+          msg: 'Preview URL must be a valid URL'
+        }
+      }
+    },
+    averageRating: {
+      type: DataTypes.FLOAT,
+      allowNull: true,
+      defaultValue: 0,
+      validate: {
+        min: 0.0,
+        max: 5.0
+      }
     },
     createdBy: {
       type: DataTypes.UUID,

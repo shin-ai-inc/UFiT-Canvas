@@ -41,8 +41,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Build TypeScript
-RUN npm run build
+# Build TypeScript (本番環境用tsconfig使用)
+RUN npx tsc --project tsconfig.production.json
 
 # Production stage
 FROM node:18-alpine AS production

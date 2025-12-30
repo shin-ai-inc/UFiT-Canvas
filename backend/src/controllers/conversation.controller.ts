@@ -9,6 +9,7 @@
  */
 
 import { Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { Conversation, MessageRole } from '../models/conversation.model';
 import { Slide } from '../models/slide.model';
 import { AuditLog, ActionType, ResourceType } from '../models/audit-log.model';
@@ -81,10 +82,10 @@ export const getConversations = asyncHandler(async (req: Request, res: Response)
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.READ,
+    actionType: ActionType.READ,
     resourceType: ResourceType.CONVERSATION,
     resourceId: null,
-    metadata: { filters: where, page: pageNum, limit: limitNum }
+    actionDetails: { filters: where, page: pageNum, limit: limitNum }
   });
 
   res.json({
@@ -134,7 +135,7 @@ export const getConversationById = asyncHandler(async (req: Request, res: Respon
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.READ,
+    actionType: ActionType.READ,
     resourceType: ResourceType.CONVERSATION,
     resourceId: id
   });
@@ -193,9 +194,10 @@ export const createConversation = asyncHandler(async (req: Request, res: Respons
     userId: user.sub,
     messages: initialMessage ? [
       {
+        id: uuidv4(),
         role: MessageRole.USER,
         content: initialMessage,
-        timestamp: new Date().toISOString()
+        timestamp: new Date()
       }
     ] : []
   });
@@ -203,10 +205,10 @@ export const createConversation = asyncHandler(async (req: Request, res: Respons
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.CREATE,
+    actionType: ActionType.CREATE,
     resourceType: ResourceType.CONVERSATION,
     resourceId: conversation.id,
-    metadata: { slideId, hasInitialMessage: !!initialMessage }
+    actionDetails: { slideId, hasInitialMessage: !!initialMessage }
   });
 
   res.status(201).json({
@@ -263,9 +265,10 @@ export const addMessage = asyncHandler(async (req: Request, res: Response): Prom
 
   // メッセージ追加
   const newMessage = {
+    id: uuidv4(),
     role,
     content,
-    timestamp: new Date().toISOString()
+    timestamp: new Date()
   };
 
   conversation.messages = [...conversation.messages, newMessage];
@@ -274,10 +277,10 @@ export const addMessage = asyncHandler(async (req: Request, res: Response): Prom
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.UPDATE,
+    actionType: ActionType.UPDATE,
     resourceType: ResourceType.CONVERSATION,
     resourceId: id,
-    metadata: { action: 'add_message', role }
+    actionDetails: { action: 'add_message', role }
   });
 
   res.json({
@@ -311,10 +314,10 @@ export const deleteConversation = asyncHandler(async (req: Request, res: Respons
   // 監査ログ記録（削除前）
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.DELETE,
+    actionType: ActionType.DELETE,
     resourceType: ResourceType.CONVERSATION,
     resourceId: id,
-    metadata: { messageCount: conversation.messages.length }
+    actionDetails: { messageCount: conversation.messages.length }
   });
 
   // 会話削除
@@ -358,10 +361,10 @@ export const deleteConversationsBySlide = asyncHandler(async (req: Request, res:
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.DELETE,
+    actionType: ActionType.DELETE,
     resourceType: ResourceType.CONVERSATION,
     resourceId: null,
-    metadata: { slideId, deletedCount }
+    actionDetails: { slideId, deletedCount }
   });
 
   res.json({
@@ -402,10 +405,10 @@ export const clearConversation = asyncHandler(async (req: Request, res: Response
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.UPDATE,
+    actionType: ActionType.UPDATE,
     resourceType: ResourceType.CONVERSATION,
     resourceId: id,
-    metadata: { action: 'clear_messages', clearedCount: messageCount }
+    actionDetails: { action: 'clear_messages', clearedCount: messageCount }
   });
 
   res.json({

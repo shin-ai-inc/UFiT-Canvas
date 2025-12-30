@@ -8,6 +8,7 @@
  * ハードコード値排除: すべて環境変数から動的取得
  */
 
+// @ts-expect-error - AWS SDK is optional dependency
 import { S3ClientConfig } from '@aws-sdk/client-s3';
 
 /**

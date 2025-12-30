@@ -550,7 +550,12 @@ export const analyzeSlideQuality = asyncHandler(async (req: Request, res: Respon
   // 品質スコア更新
   slide.updateQualityScore({
     qualityScore: analysis.qualityScore,
-    issues: analysis.issues,
+    issues: analysis.issues as Array<{
+      category: 'layout' | 'readability' | 'hierarchy' | 'branding' | 'whitespace';
+      severity: 'critical' | 'major' | 'minor';
+      description: string;
+      suggestedFix: string;
+    }>,
     analyzedAt: new Date()
   });
 
@@ -647,9 +652,19 @@ export const autoFixSlide = asyncHandler(async (req: Request, res: Response): Pr
 
   try {
     // Execute auto-fix using Vision Auto-Fix Service
+    const qualityAnalysisWithExtras = {
+      qualityScore: slide.qualityAnalysis!.qualityScore,
+      issues: slide.qualityAnalysis!.issues as any,
+      strengths: [],
+      goldenRatioCompliance: 0,
+      accessibilityScore: 0,
+      aestheticScore: 0,
+      timestamp: slide.qualityAnalysis!.analyzedAt
+    };
+
     const autoFixResult = await visionAutoFixService.executeAutoFix(
       slide,
-      slide.qualityAnalysis
+      qualityAnalysisWithExtras
     );
 
     // Update slide with fixed content

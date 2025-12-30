@@ -10,11 +10,19 @@ import { DataTypes, Model, Optional } from 'sequelize';
 import { sequelize } from './index';
 import { hashPassword } from '../utils/bcrypt.util';
 
+export enum UserRole {
+  GUEST = 'guest',
+  FREE_USER = 'free_user',
+  PREMIUM_USER = 'premium_user',
+  ADMIN = 'admin'
+}
+
 export interface UserAttributes {
   id: string;
   email: string;
   passwordHash: string;
   role: 'guest' | 'free_user' | 'premium_user' | 'admin';
+  auth0Id?: string;
   firstName?: string;
   lastName?: string;
   company?: string;
@@ -36,6 +44,7 @@ export class User extends Model<UserAttributes, UserCreationAttributes> implemen
   declare email: string;
   declare passwordHash: string;
   declare role: 'guest' | 'free_user' | 'premium_user' | 'admin';
+  declare auth0Id?: string;
   declare firstName?: string;
   declare lastName?: string;
   declare company?: string;
@@ -90,6 +99,12 @@ User.init(
       type: DataTypes.ENUM('guest', 'free_user', 'premium_user', 'admin'),
       allowNull: false,
       defaultValue: 'free_user'
+    },
+    auth0Id: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      unique: true,
+      field: 'auth0_id'
     },
     firstName: {
       type: DataTypes.STRING(100),

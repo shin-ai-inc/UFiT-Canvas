@@ -24,6 +24,12 @@ import { User } from './user.model';
  * アクションタイプ
  */
 export enum ActionType {
+  // 汎用CRUD操作
+  CREATE = 'create',
+  READ = 'read',
+  UPDATE = 'update',
+  DELETE = 'delete',
+
   // 認証関連
   LOGIN = 'login',
   LOGOUT = 'logout',
@@ -86,6 +92,9 @@ export interface AuditLogDetails {
   requestBody?: any;
   responseBody?: any;
   duration?: number;
+  operation?: string;
+  reason?: string;
+  slideTitle?: string;
   changedFields?: string[];
   oldValues?: Record<string, any>;
   newValues?: Record<string, any>;
@@ -95,6 +104,7 @@ export interface AuditLogDetails {
     invalidToken?: boolean;
     maliciousPayload?: boolean;
   };
+  [key: string]: any;  // 追加のプロパティを許可
 }
 
 /**

@@ -73,7 +73,7 @@ export function generateAccessToken(user: {
   role: string;
 }): string {
   const privateKey = getPrivateKey();
-  const expiresIn = process.env.ACCESS_TOKEN_EXPIRATION || '15m';
+  const expiresIn: string = process.env.ACCESS_TOKEN_EXPIRATION || '15m';
 
   return jwt.sign(
     {
@@ -81,11 +81,11 @@ export function generateAccessToken(user: {
       email: user.email,
       role: user.role
     },
-    privateKey,
+    privateKey as jwt.Secret,
     {
       algorithm: 'RS256',
-      expiresIn
-    }
+      expiresIn: expiresIn
+    } as jwt.SignOptions
   );
 }
 
@@ -99,7 +99,7 @@ export function generateRefreshToken(user: {
   role: string;
 }): string {
   const privateKey = getPrivateKey();
-  const expiresIn = process.env.REFRESH_TOKEN_EXPIRATION || '7d';
+  const expiresIn: string = process.env.REFRESH_TOKEN_EXPIRATION || '7d';
 
   // Generate a random token family for refresh token rotation
   const tokenFamily = Math.random().toString(36).substring(2, 15);
@@ -111,11 +111,11 @@ export function generateRefreshToken(user: {
       role: user.role,
       tokenFamily
     },
-    privateKey,
+    privateKey as jwt.Secret,
     {
       algorithm: 'RS256',
-      expiresIn
-    }
+      expiresIn: expiresIn
+    } as jwt.SignOptions
   );
 }
 

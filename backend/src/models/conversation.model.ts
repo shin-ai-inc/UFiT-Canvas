@@ -22,11 +22,20 @@ import { User } from './user.model';
 import { Slide } from './slide.model';
 
 /**
+ * メッセージロール
+ */
+export enum MessageRole {
+  USER = 'user',
+  ASSISTANT = 'assistant',
+  SYSTEM = 'system'
+}
+
+/**
  * メッセージ
  */
 export interface Message {
   id: string;
-  role: 'user' | 'assistant' | 'system';
+  role: MessageRole | 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
   metadata?: {

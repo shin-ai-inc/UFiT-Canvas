@@ -103,10 +103,10 @@ export const getTemplates = asyncHandler(async (req: Request, res: Response): Pr
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.READ,
+    actionType: ActionType.READ,
     resourceType: ResourceType.TEMPLATE,
     resourceId: null,
-    metadata: { filters: where, page: pageNum, limit: limitNum }
+    actionDetails: { filters: where, page: pageNum, limit: limitNum }
   });
 
   res.json({
@@ -163,7 +163,7 @@ export const getTemplateById = asyncHandler(async (req: Request, res: Response):
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.READ,
+    actionType: ActionType.READ,
     resourceType: ResourceType.TEMPLATE,
     resourceId: id
   });
@@ -242,10 +242,10 @@ export const createTemplate = asyncHandler(async (req: Request, res: Response): 
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.CREATE,
+    actionType: ActionType.CREATE,
     resourceType: ResourceType.TEMPLATE,
     resourceId: template.id,
-    metadata: { name, category, isPremium }
+    actionDetails: { name, category, isPremium }
   });
 
   res.status(201).json({
@@ -305,10 +305,10 @@ export const updateTemplate = asyncHandler(async (req: Request, res: Response): 
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.UPDATE,
+    actionType: ActionType.UPDATE,
     resourceType: ResourceType.TEMPLATE,
     resourceId: id,
-    metadata: { updates: Object.keys(updates) }
+    actionDetails: { updates: Object.keys(updates) }
   });
 
   res.json({
@@ -360,10 +360,10 @@ export const deleteTemplate = asyncHandler(async (req: Request, res: Response): 
   // 監査ログ記録
   await AuditLog.create({
     userId: user.sub,
-    action: ActionType.DELETE,
+    actionType: ActionType.DELETE,
     resourceType: ResourceType.TEMPLATE,
     resourceId: id,
-    metadata: { name: template.name, usageCount: template.usageCount }
+    actionDetails: { name: template.name, usageCount: template.usageCount }
   });
 
   res.json({

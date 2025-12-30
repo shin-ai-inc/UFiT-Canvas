@@ -102,7 +102,7 @@ export const register = asyncHandler(async (req: Request, res: Response): Promis
     firstName: firstName || null,
     lastName: lastName || null,
     company: company || null,
-    role: process.env.DEFAULT_USER_ROLE || 'free_user',
+    role: (process.env.DEFAULT_USER_ROLE || 'free_user') as 'guest' | 'free_user' | 'premium_user' | 'admin',
     emailVerified: false,
     twoFactorEnabled: false,
     gdprConsent: req.body.gdprConsent || false

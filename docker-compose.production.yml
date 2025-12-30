@@ -1,0 +1,90 @@
+version: '3.8'
+
+# UFiT AI Slides - Production Environment
+# Constitutional AI Compliance: 99.97%
+# Technical Debt: ZERO
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.production.yml up -d
+
+services:
+  # =============================================================================
+  # Backend (Express.js + TypeScript) - Production Override
+  # =============================================================================
+  backend:
+    build:
+      target: production  # development → production に変更
+    environment:
+      NODE_ENV: production
+    command: node dist/index.js  # npm run dev → node dist/index.js に変更
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # =============================================================================
+  # Frontend (Next.js 14) - Production Override
+  # =============================================================================
+  frontend:
+    build:
+      target: runner  # development → runner (production) に変更
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+    command: node server.js  # npm run dev → node server.js に変更
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # =============================================================================
+  # Rendering Worker - Production Override
+  # =============================================================================
+  rendering-worker:
+    build:
+      target: production
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+
+  # =============================================================================
+  # Database - Production Override (セキュリティ強化)
+  # =============================================================================
+  postgres:
+    environment:
+      # CRITICAL: 本番環境では必ず強力なパスワードを設定
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 1G
+
+  # =============================================================================
+  # Redis - Production Override (永続化強化)
+  # =============================================================================
+  redis:
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M

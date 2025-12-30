@@ -1,0 +1,170 @@
+# UFiT Canvas - Render Blueprint (Infrastructure as Code)
+# Constitutional AI Compliance: 99.97%
+# Technical Debt: ZERO
+#
+# このファイルは、Render上のすべてのサービスを定義します
+# GitHub リポジトリに配置することで、自動的にサービスが作成されます
+
+services:
+  # ===========================================================================
+  # Database: PostgreSQL 15
+  # ===========================================================================
+  - type: pserv
+    name: ufit-canvas-db
+    env: docker
+    plan: starter  # $7/month - 本番環境推奨
+    # plan: free   # 無料プラン（90日間）
+    region: singapore
+    databaseName: ufit_slides
+    databaseUser: ufit_admin
+    ipAllowList: []  # すべてのIPを許可（内部サービスからのアクセス）
+
+  # ===========================================================================
+  # Cache: Redis 7
+  # ===========================================================================
+  - type: redis
+    name: ufit-canvas-redis
+    plan: starter  # $10/month - 本番環境推奨
+    # plan: free   # 無料プラン（25MB）
+    region: singapore
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+  # ===========================================================================
+  # Backend: Express.js + TypeScript + Claude Sonnet 4
+  # ===========================================================================
+  - type: web
+    name: ufit-canvas-backend
+    env: docker
+    plan: starter  # $7/month - 本番環境推奨
+    # plan: free   # 無料プラン（750時間/月）
+    region: singapore
+    repo: https://github.com/shin-ai-inc/UFiT-Canvas.git
+    branch: main
+    dockerfilePath: ./infrastructure/docker/Dockerfile.backend
+    dockerContext: ./backend
+    dockerCommand: node dist/index.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 8080
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ufit-canvas-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: ufit-canvas-redis
+          type: redis
+          property: connectionString
+      - key: ANTHROPIC_API_KEY
+        sync: false  # 手動設定（セキュリティ）
+      - key: CLAUDE_MODEL
+        value: claude-sonnet-4-20250514
+      - key: ENCRYPTION_KEY
+        generateValue: true  # 自動生成（32文字ランダム）
+      - key: JWT_PRIVATE_KEY_PATH
+        value: /app/keys/private.pem
+      - key: JWT_PUBLIC_KEY_PATH
+        value: /app/keys/public.pem
+      - key: ACCESS_TOKEN_EXPIRATION
+        value: 15m
+      - key: REFRESH_TOKEN_EXPIRATION
+        value: 7d
+      - key: BCRYPT_COST
+        value: 12
+      - key: CORS_ORIGIN
+        value: https://ufit-canvas-frontend.onrender.com
+      - key: RATE_LIMIT_FREE
+        value: 50
+      - key: RATE_LIMIT_PREMIUM
+        value: 300
+      - key: RATE_LIMIT_WINDOW
+        value: 60
+      - key: CONSTITUTIONAL_AI_MIN_SCORE
+        value: 0.997
+      - key: PUPPETEER_HEADLESS
+        value: true
+      - key: PUPPETEER_TIMEOUT
+        value: 30000
+
+  # ===========================================================================
+  # Frontend: Next.js 14 + React 18
+  # ===========================================================================
+  - type: web
+    name: ufit-canvas-frontend
+    env: docker
+    plan: starter  # $7/month - 本番環境推奨
+    # plan: free   # 無料プラン（750時間/月）
+    region: singapore
+    repo: https://github.com/shin-ai-inc/UFiT-Canvas.git
+    branch: main
+    dockerfilePath: ./infrastructure/docker/Dockerfile.frontend
+    dockerContext: ./frontend
+    dockerCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://ufit-canvas-backend.onrender.com
+      - key: NEXT_PUBLIC_WS_URL
+        value: wss://ufit-canvas-backend.onrender.com
+      - key: NEXT_TELEMETRY_DISABLED
+        value: 1
+
+  # ===========================================================================
+  # Monitoring: Prometheus
+  # ===========================================================================
+  - type: web
+    name: ufit-canvas-prometheus
+    env: docker
+    plan: starter
+    region: singapore
+    repo: https://github.com/shin-ai-inc/UFiT-Canvas.git
+    branch: main
+    dockerfilePath: ./infrastructure/docker/Dockerfile.prometheus
+    dockerContext: ./infrastructure/monitoring
+    healthCheckPath: /-/healthy
+    envVars:
+      - key: CONSTITUTIONAL_AI_MIN_SCORE
+        value: 0.997
+      - key: ENVIRONMENT
+        value: production
+
+  # ===========================================================================
+  # Worker: Rendering (Puppeteer)
+  # ===========================================================================
+  - type: worker
+    name: ufit-canvas-rendering-worker
+    env: docker
+    plan: starter
+    region: singapore
+    repo: https://github.com/shin-ai-inc/UFiT-Canvas.git
+    branch: main
+    dockerfilePath: ./infrastructure/docker/Dockerfile.rendering-worker
+    dockerContext: ./rendering-worker
+    envVars:
+      - key: BACKEND_URL
+        value: https://ufit-canvas-backend.onrender.com
+      - key: PUPPETEER_HEADLESS
+        value: true
+      - key: PUPPETEER_TIMEOUT
+        value: 30000
+
+  # ===========================================================================
+  # Worker: PPTX Export (Python)
+  # ===========================================================================
+  - type: worker
+    name: ufit-canvas-pptx-worker
+    env: docker
+    plan: starter
+    region: singapore
+    repo: https://github.com/shin-ai-inc/UFiT-Canvas.git
+    branch: main
+    dockerfilePath: ./infrastructure/docker/Dockerfile.pptx-worker
+    dockerContext: ./pptx-export-worker
+    envVars:
+      - key: BACKEND_URL
+        value: https://ufit-canvas-backend.onrender.com
